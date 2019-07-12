@@ -178,7 +178,7 @@ if __name__ == "__main__":
         PLECout.close()
         PLISRSout.close()
         if args.juicer == None or args.genome == None:
-            log.write("don't give juicer path and the genome size file,can't convert to hic file")
+            log.write("don't give juicer path and the genome size file,can't convert to hic file\n")
         else:
             returncode,returnresult = subprocess.getstatusoutput("java -jar {0} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {1} {2} {3} && java -jar {4} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {5} {6} {7} && java -jar {8} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {9} {10} {11}".format(args.juicer,allfile,allfile+".hic",args.genome,args.juicer,PLECfile,PLECfile+".hic",args.genome,args.juicer,PLISRSfile,PLISRSfile+".hic",args.genome))
             if returncode != 0:
@@ -199,7 +199,7 @@ if __name__ == "__main__":
         PLECout.close()
         PLISRSout.close()
         if args.juicer == None or args.genome == None:
-            log.write("don't give juicer path and the genome size file,can't convert to hic file")
+            log.write("don't give juicer path and the genome size file,can't convert to hic file\n")
         else:
             returncode,returnresult = subprocess.getstatusoutput("java -jar {0} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {1} {2} {3} && java -jar {4} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {5} {6} {7} && java -jar {8} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {9} {10} {11}".format(args.juicer,allfile,allfile+".hic",args.genome,args.juicer,PLECfile,PLECfile+".hic",args.genome,args.juicer,PLISRSfile,PLISRSfile+".hic",args.genome))
             if returncode != 0:
