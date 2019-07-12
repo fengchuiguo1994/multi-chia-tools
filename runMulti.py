@@ -147,9 +147,9 @@ if __name__ == "__main__":
                     for i in tmp[-1].split(","):
                         if i != "0" and i != "":
                             fout.write("{0}\t{1}\n".format(i,tmp[9]))
-        log.write("Rscript plot.r {0} {1}\n".format(args.output+"/"+args.prefix+".distance.txt",args.output+"/"+args.prefix+".distance.pdf"))
+        log.write("Rscript {0}/plot.r {1} {2}".format(os.path.split(os.path.realpath(__file__))[0],args.output+"/"+args.prefix+".distance.txt",args.output+"/"+args.prefix+".distance.pdf"))
         print("Rscript {0}/plot.r {1} {2}".format(os.path.split(os.path.realpath(__file__))[0],args.output+"/"+args.prefix+".distance.txt",args.output+"/"+args.prefix+".distance.pdf"))
-        returncode,returnresult = subprocess.getstatusoutput("Rscript plot.r {0} {1}".format(args.output+"/"+args.prefix+".distance.txt",args.output+"/"+args.prefix+".distance.pdf"))
+        returncode,returnresult = subprocess.getstatusoutput("Rscript {0}/plot.r {1} {2}".format(os.path.split(os.path.realpath(__file__))[0],args.output+"/"+args.prefix+".distance.txt",args.output+"/"+args.prefix+".distance.pdf"))
         if returncode != 0:
             print ("[ERROR]: failed to plot : {0}\n".format(returnresult))
             exit()
