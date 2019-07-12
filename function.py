@@ -9,34 +9,25 @@ from operator import itemgetter
 '''
 function : give runMulti the deal function
 create : huang xingyu
-version : 1.0.0
-begin : 2019-06-19
+version : 1.0.1
+begin : 2019-07-11
 end : 
 '''
 
 def readfile(fin):
-    if re.match(".bam",fin):
+    if fin.endswith(".bam"):
         samfile=pysam.AlignmentFile(fin,'rb')
     else:
         samfile=pysam.AlignmentFile(fin)
     return samfile
 
 def bam2bed(samfile,output,prefix,mapq,readlen,minlength,black):
-    header = samfile.header # sam 头文件
     if not os.path.exists(output):
         os.makedirs(output)
-    outprefix1 = os.path.join(output,prefix+".R1R2.bam")
-    outprefix2 = os.path.join(output,prefix+".R1.bam")
-    outprefix3 = os.path.join(output,prefix+".R2.bam")
-    outprefix4 = os.path.join(output,prefix+".un.bam")
-    outbed = os.path.join(output,prefix+".bed")
-    outbed2 = os.path.join(output,prefix+".cv.bed")
-    un = pysam.AlignmentFile(outprefix4,"wb",header=header)
-    both = pysam.AlignmentFile(outprefix1,"wb",header=header)
-    R1 = pysam.AlignmentFile(outprefix2,"wb",header=header)
-    R2 = pysam.AlignmentFile(outprefix3,"wb",header=header)
-    bed = open(outbed,'w')
-    bed2 = open(outbed2,'w')
+    outbedfile = os.path.join(output,prefix+".bed")
+    outbedfile2 = os.path.join(output,prefix+".cv.bed")
+    bed = open(outbedfile,'w')
+    bed2 = open(outbedfile2,'w')
     
     typeBC = {}
     R1total = R2total = 0
@@ -53,7 +44,7 @@ def bam2bed(samfile,output,prefix,mapq,readlen,minlength,black):
     for line in samfile:
         nn += 1
         if nn%1000000==0:
-            print("deal with %d M reads,use time %f s" % (int(nn/1000000),time.time()-be))
+            print("deal with {0} M reads,use time {1:.5f} s".format(int(nn/1000000),time.time()-be))
             be = time.time()
 
         if not line.is_secondary:
@@ -63,22 +54,6 @@ def bam2bed(samfile,output,prefix,mapq,readlen,minlength,black):
             R1total += 1
         else:
             R2total += 1
-
-        if line.is_unmapped and line.mate_is_unmapped: ## R1 and R2 both unmap
-            un.write(line)
-        elif line.is_unmapped: ## 
-            if line.is_read1: ## R1 unmap and R2 map
-                R2.write(line)
-            else: ## R2 unmap and R1 map
-                R1.write(line)
-        elif line.mate_is_unmapped:
-            if line.is_read1: ## R1 map and R2 unmap
-                R1.write(line)
-            else: ## R2 map and R1 unmap
-                R2.write(line)
-        else: # both map
-            both.write(line)
-
         if line.has_tag('BX'):
             barcode = re.search("(\w){16}",line.get_tag('BX'))[0]
             if barcode not in typeBC:
@@ -123,10 +98,6 @@ def bam2bed(samfile,output,prefix,mapq,readlen,minlength,black):
                                 else:
                                     bed.write(line.reference_name+"\t"+str(line.reference_start)+"\t"+str(line.reference_end+minlength)+"\t"+barcode+"-"+line.query_name+"\t.\t+\n")
                                     bed2.write(barcode+"-"+line.reference_name+"\t"+str(line.reference_start)+"\t"+str(line.reference_end+minlength)+"\t"+line.query_name+"\n")
-    un.close()
-    both.close()
-    R1.close()
-    R2.close()
     bed.close()
     bed2.close()
     ## readsID总数      reads条数(包括secondary)    barcode字典     R1total     R2total     R1有barcode数目     R2有barcode数目     R1有 map    R2有 map    R1有 mapuniq    R2有 mapuniq    R1有 map Q30    R2有 map Q30    R1有 map Q30 len    R2有 map Q30 len    R1有 map Q30 len chrom  R2有 map Q30 len chrom
@@ -146,19 +117,7 @@ def tobed12(mylist,barcode,out):
         starttmp = ','.join(map(str,start))+","
         out.write("{0}\t{1}\t{2}\t{3}\t0\t+\t{4}\t{5}\t0\t{6}\t{7}\t{8}\n".format(mylist[0][0],mylist[0][1],mylist[-1][2],barcode,mylist[0][1],mylist[-1][2],len(mylist),lengthtmp,starttmp))
 
-def deal(mylist,barcode,bed1,bed2):
-    out = []
-    region = []
-    flag = None
-    for line in mylist:
-        out.append("\t".join(line))
-        if flag != None and flag != line[0]:
-            tobed12(region,barcode,bed2)
-            region = []
-        flag = line[0]
-        region.append(line)
-    bed1.write(barcode+"\t"+str(len(out))+"\t"+";".join(out)+"\n")
-    tobed12(region,barcode,bed2)
+def complex_cal(out):
     if len(out) >= 1000:
         return "F>1000"
     elif len(out) >= 500:
@@ -179,35 +138,66 @@ def deal(mylist,barcode,bed1,bed2):
         return "F15_19"
     else:
         return "F{0}".format(len(out))
-    
-    
-    
-def fragment2cluster(fin,outdir,prefix):
-    cp = {}
-    shunxu = ('F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12','F13','F14','F15_19','F20_29','F30_39','F40_49','F50_99','F100_199','F200_499','F500_999','F>1000')
-    for i in shunxu:
-        cp[i] = 0
-    outbed = os.path.join(outdir,prefix+".frag.bed")
+
+def deal(mylist,barcode,bed1,bed2,bed3):
+    all_contain = []   # inter and intra
+    IGVregion = []     # convert result to IGV bed
+    intra_region = []  # just contain intra result
+    complex_num = []   # BC complex number
+    chrom = None       # chrom ID
+    for line in mylist:
+        if chrom != None and chrom != line[0]:
+            tobed12(IGVregion,barcode,bed2)
+            complex_num.append(complex_cal(intra_region))
+            bed3.write(barcode+"\t"+str(len(intra_region))+"\t"+";".join(intra_region)+"\n")
+            IGVregion = []
+            intra_region = []
+        chrom = line[0]
+        all_contain.append("\t".join(line))
+        IGVregion.append(line)
+        intra_region.append("\t".join(line))
+    tobed12(IGVregion,barcode,bed2)
+    complex_num.append(complex_cal(intra_region))
+    bed3.write(barcode+"\t"+str(len(intra_region))+"\t"+";".join(intra_region)+"\n")
+    bed1.write(barcode+"\t"+str(len(all_contain))+"\t"+";".join(all_contain)+"\n")
+    complex_num.append(complex_cal(all_contain))
+    return complex_num
+
+def fragment2BCbed(fin,outdir,prefix):
+    all_complex_dict = {}
+    intra_complex_dict = {}
+    order = ('F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12','F13','F14','F15_19','F20_29','F30_39','F40_49','F50_99','F100_199','F200_499','F500_999','F>1000')
+    for tmp_order in order:
+        all_complex_dict[tmp_order] = 0
+        intra_complex_dict[tmp_order] = 0
+    outbed = os.path.join(outdir,prefix+".all.frag.bed")
     outbed2 = os.path.join(outdir,prefix+".IGV.bed")
+    outbed3 = os.path.join(outdir,prefix+".samechrom.frag.bed")
     bed1 = open(outbed,'w')
     bed2 = open(outbed2,'w')
+    bed3 = open(outbed3,'w')
     with open(fin,'r') as fl:
-        out = []
+        region = []
         flag = None
         for line in fl:
             tmp = line.strip().split("-",1)
             barcode = tmp[0]
             if flag != None and flag != barcode:
-                kk = deal(out,flag,bed1,bed2)
-                cp[kk] += 1
-                out = []
+                complex_num = deal(region,flag,bed1,bed2,bed3)
+                all_complex_dict[complex_num[-1]] += 1
+                for tmp_complex in complex_num[:len(complex_num)-1]:
+                    intra_complex_dict[tmp_complex] += 1
+                region = []
             flag = barcode
-            out.append(tmp[1].split("\t")[0:3])
-        kk = deal(out,flag,bed1,bed2)
-        cp[kk] += 1
+            region.append(tmp[1].split("\t")[0:3])
+        complex_num = deal(region,flag,bed1,bed2,bed3)
+        all_complex_dict[complex_num[-1]] += 1
+        for tmp_complex in complex_num[:len(complex_num)-1]:
+            intra_complex_dict[tmp_complex] += 1
     bed1.close()
     bed2.close()
-    return(cp)
+    bed3.close()
+    return(all_complex_dict,intra_complex_dict)
 
 
 def convert(infile,allfile,PLECfile,PLISRSfile,fragment):
