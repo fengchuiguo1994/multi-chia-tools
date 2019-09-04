@@ -11,6 +11,7 @@ plotHeatmap -m output/out.frag.profile.gz -out output/out.frag.profile.pdf --col
 # eg：H:fragnumH1|human-10000-100000002-AAACACCAGAAACCTABX1-E00515;chr11      75891303        75891934        2       human-10000-100000002-AAACACCAGAAACCTABX1-E00515-FRAG0000
 # eg：H-A:fragnumH2-chrnum1|human-10000-100000107-AAACACCAGCTTACACBX1-E00515;chr2     32916229        32916792        1       human-10000-100000107-AAACACCAGCTTACACBX1-E00515-FRAG0000;chr2  235142786       235145352       13      human-10000-100000107-AAACACCAGCTTACACBX1-E00515-FRAG0001
 # 我的只考虑了barcode ID
+# 也正因为如此，上传到ncbi的data无法用tian的软件跑，可以分不同的run比对，然后将这个run所有的id加上一个相同的机器ID，比如加 E00515: (分号不能少)
 
 ## tian：(只保留了primary hit) 我的保留了secondary hit (STEP0401_F2304.run.p)
 # samtools view -h -F 2304 $F|samtools view -hbS - > $file.F2304.bam &
