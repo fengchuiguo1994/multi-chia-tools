@@ -32,3 +32,5 @@ plotHeatmap -m output/out.frag.profile.gz -out output/out.frag.profile.pdf --col
 # EXTE=int(E)+int(EXT3)
 
 ## tian：(将跨染色体的结果分成了自连接和染色体间链接) 我的是全部考虑 (STEP040503_CLASS_GEM2EAS.run.p/STEP040504_CLASS_E2AS.run.p/STEP040505_COMBINE_SA.run)
+
+## 最终的日志文件中 Reads_q>=30_&_len>=50bp_&_3'ext500、Reads_q>=30_&_len>=50bp_&_3'ext500_&_MAJOR_CHROM 写反了。
