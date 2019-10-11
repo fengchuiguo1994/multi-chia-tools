@@ -4,10 +4,10 @@ a python program to handles the multi-chia/chia-drop data
 
 REQUIREMENTS
 ============
-a) python3<br/>
-        pysam<br/>
-        pybedtools<br/>
-b) R<br/>
+python3<br/>
+    - pysam<br/>
+    - pybedtools<br/>
+R<br/>
 
 USAGE of multi-chia-tools
 ============
