@@ -4,10 +4,10 @@ a python program to handles the multi-chia/chia-drop data
 
 REQUIREMENTS
 ============
-a) python3
-        pysam
-        pybedtools
-b) R
+a) python3<br/>
+        pysam<br/>
+        pybedtools<br/>
+b) R<br/>
 
 USAGE of multi-chia-tools
 ============
@@ -15,13 +15,14 @@ USAGE of multi-chia-tools
 
 Release Notes
 ============
+
 Version 1.0.1
 --------------------------
-1 add convert to .hic format
-2 add drop chromosome in black list
-3 add just use fq1 data to generate result
-4 add just use intra data to generate interaction
+1. add convert to .hic format
+2. add drop chromosome in black list
+3. add just use fq1 data to generate result
+4. add just use intra data to generate interaction
 
 Version 1.0.0
 --------------------------
-1 Implemented core algorithms of process the chiadrop/multi-chia data
+1. Implemented core algorithms of process the chiadrop/multi-chia data
