@@ -11,28 +11,28 @@ import function
 
 '''
 function : deal with multi-chia data
-version : 1.0.1
+version : 2.0.0
 create : xingyu huang
-begin : 2019-07-11
+begin : 2019-10-11
 end : 
 '''
 
 parser = argparse.ArgumentParser(description = "deal with multi-chia data")
 parser.add_argument("-i", "--input", required=True,help="the input bam/sam file")
 parser.add_argument("-f", "--info", required=True,help="the input summary file")
-parser.add_argument("-v", "--version", action = "version", version = "%(prog)s 1.0.1 by xyhuang")
-parser.add_argument("-o", "--output", default = "output", help = "path of output file [output] ")
-parser.add_argument("-p", "--prefix", default = "out", help = "prefix of output file [out] ")
-parser.add_argument("-m", "--mapq", default = 30, type = int, help = "mapping quality [30] ")
-parser.add_argument("-l", "--length", default = 50, type = int, help = "reference length [50] ")
-parser.add_argument("-e", "--extend", default = 500, type = int, help = "extend length at 3' end [500] ")
-parser.add_argument("-d", "--distance", default = 3000, type = int, help = "merge distance [3000] ")
-parser.add_argument("-j", "--juicer", help = "path of Juicer tools")
-parser.add_argument("-s", "--step", default = 1, type = int,help = "from step to end [1]")
-parser.add_argument("-F", "--fragment", default = 2, type = int, help = "filter GEMs with the number of fragment < this value [2]")
-parser.add_argument("-g", "--genome",help = "size of genome [hg19.chrom.size]")
-parser.add_argument("-b", "--blacklist",help = "a file contain drop chromosome,one per line")
-parser.add_argument("-a", "--anchor",help = "a bed file contain the chipseq anchor region")
+parser.add_argument("-v", "--version", action = "version", version = "%(prog)s 2.0.0 by xyhuang")
+parser.add_argument("-j", "--juicer", help = "the path of Juicer tools,if set,the -g is must")
+parser.add_argument("-g", "--genome",help = "size of genome file;like hg19.chrom.size")
+parser.add_argument("-o", "--output", default = "output", help = "path of output file [default:output] ")
+parser.add_argument("-p", "--prefix", default = "out", help = "prefix of output file [default:out] ")
+parser.add_argument("-m", "--mapq", default = 30, type = int, help = "mapping quality [default:30] ")
+parser.add_argument("-l", "--length", default = 50, type = int, help = "the length of reads match to reference genome [default:50] ")
+parser.add_argument("-e", "--extend", default = 500, type = int, help = "extend length at 3' end(from 5' to 3') [default:500] ")
+parser.add_argument("-d", "--distance", default = 3000, type = int, help = "merge two fragment if the distance is less 3000 [default:3000] ")
+parser.add_argument("-s", "--step", default = 1, type = int,help = "from the step to end [default:1]")
+parser.add_argument("-F", "--fragment", default = 2, type = int, help = "filter GEMs with the number of fragment < this value [default:2]")
+parser.add_argument("-b", "--blacklist",help = "a file contain drop chromosome,one chromosome per line")
+parser.add_argument("-a", "--anchor",help = "a bed file contain the chipseq anchor region,we will use it to find cluster")
 args = parser.parse_args()
 
 
@@ -45,6 +45,7 @@ if __name__ == "__main__":
         log = open(logfile,'w')
     else:
         log = open(logfile,'a')
+
 
 #  get summary file infomation   #
     if args.step == 1:
@@ -59,7 +60,7 @@ if __name__ == "__main__":
         val = fin[1].split(",")
         for i,j in zip(flag,val):
             infodict[i] = j
-        log.write("gems_detected : {0}\ntotal_reads : {1}\nmean_depth : {2}\npcr_duplication : {3}\n".format(infodict['gems_detected'],infodict['number_reads'],infodict['mean_depth'],infodict['pcr_duplication']))
+        log.write("gems_detected : {0}\nmean_dna_per_gem : {1}\nmolecule_length_mean : {2}\nmolecule_length_stddev : {3}\ntotal_reads : {4}\nmedian_insert_size : {5}\nmean_depth : {6}\nzero_coverage : {7}\npcr_duplication : {8}\n".format(infodict['gems_detected'],int(infodict['mean_dna_per_gem']),infodict['molecule_length_mean'],infodict['molecule_length_stddev'],infodict['number_reads'],infodict['median_insert_size'],infodict['mean_depth'],infodict['zero_coverage'],infodict['pcr_duplication']))
 
         log.write("Step 1 use time : {0:.5f} s\n\n\n".format(time.time()-be))
 
@@ -148,7 +149,7 @@ if __name__ == "__main__":
                         if i != "0" and i != "":
                             fout.write("{0}\t{1}\n".format(i,tmp[9]))
         log.write("Rscript {0}/plot.r {1} {2}".format(os.path.split(os.path.realpath(__file__))[0],args.output+"/"+args.prefix+".distance.txt",args.output+"/"+args.prefix+".distance.pdf"))
-        print("Rscript {0}/plot.r {1} {2}".format(os.path.split(os.path.realpath(__file__))[0],args.output+"/"+args.prefix+".distance.txt",args.output+"/"+args.prefix+".distance.pdf"))
+        print("Rscript {0}/plot.r {1} {2}\n".format(os.path.split(os.path.realpath(__file__))[0],args.output+"/"+args.prefix+".distance.txt",args.output+"/"+args.prefix+".distance.pdf"))
         returncode,returnresult = subprocess.getstatusoutput("Rscript {0}/plot.r {1} {2}".format(os.path.split(os.path.realpath(__file__))[0],args.output+"/"+args.prefix+".distance.txt",args.output+"/"+args.prefix+".distance.pdf"))
         if returncode != 0:
             print ("[ERROR]: failed to plot : {0}\n".format(returnresult))
