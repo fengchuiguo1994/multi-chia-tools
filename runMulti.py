@@ -210,6 +210,57 @@ if __name__ == "__main__":
         log.write("Step 5 use time : {0:.5f} s\n\n\n".format(time.time()-be))
 
 
+#  convert fragment to ChIA-PET    #
+    if args.step == 6:
+        args.step += 1
+        print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " Step 6: convert fragment to ChIA-PET ...")
+        log.write(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " Step 6: convert fragment to ChIA-PET ...\n")
+        be = time.time()
+
+        infile = os.path.join(args.output,args.prefix+".all.frag.bed")
+        allfile = os.path.join(args.output,args.prefix+".total.all.bedpe")
+        PLECfile = os.path.join(args.output,args.prefix+".total.PLEC.bedpe")
+        PLISRSfile = os.path.join(args.output,args.prefix+".total.PLISRS.bedpe")
+        infl = open(infile,'r')
+        allout = open(allfile,'w')
+        PLECout = open(PLECfile,'w')
+        PLISRSout = open(PLISRSfile,'w')
+        function.convert(infl,allout,PLECout,PLISRSout,args.fragment)
+        infl.close()
+        allout.close()
+        PLECout.close()
+        PLISRSout.close()
+        if args.juicer == None or args.genome == None:
+            log.write("don't give juicer path and the genome size file,can't convert to hic file\n")
+        else:
+            returncode,returnresult = subprocess.getstatusoutput("java -jar {0} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {1} {2} {3} && java -jar {4} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {5} {6} {7} && java -jar {8} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {9} {10} {11}".format(args.juicer,allfile,allfile+".hic",args.genome,args.juicer,PLECfile,PLECfile+".hic",args.genome,args.juicer,PLISRSfile,PLISRSfile+".hic",args.genome))
+            if returncode != 0:
+                print ("[ERROR]: failed to generate HiC file : {0}\n".format(returnresult))
+                exit()
+            
+        infile = os.path.join(args.output,args.prefix+".samechrom.frag.bed")
+        allfile = os.path.join(args.output,args.prefix+".intra.all.bedpe")
+        PLECfile = os.path.join(args.output,args.prefix+".intra.PLEC.bedpe")
+        PLISRSfile = os.path.join(args.output,args.prefix+".intra.PLISRS.bedpe")
+        infl = open(infile,'r')
+        allout = open(allfile,'w')
+        PLECout = open(PLECfile,'w')
+        PLISRSout = open(PLISRSfile,'w')
+        function.convert(infl,allout,PLECout,PLISRSout,args.fragment)
+        infl.close()
+        allout.close()
+        PLECout.close()
+        PLISRSout.close()
+        if args.juicer == None or args.genome == None:
+            log.write("don't give juicer path and the genome size file,can't convert to hic file\n")
+        else:
+            returncode,returnresult = subprocess.getstatusoutput("java -jar {0} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {1} {2} {3} && java -jar {4} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {5} {6} {7} && java -jar {8} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {9} {10} {11}".format(args.juicer,allfile,allfile+".hic",args.genome,args.juicer,PLECfile,PLECfile+".hic",args.genome,args.juicer,PLISRSfile,PLISRSfile+".hic",args.genome))
+            if returncode != 0:
+                print ("[ERROR]: failed to generate HiC file : {0}\n".format(returnresult))
+                exit()
+
+        log.write("Step 5 use time : {0:.5f} s\n\n\n".format(time.time()-be))
+
     log.close()
 
 '''
