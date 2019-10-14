@@ -217,40 +217,48 @@ if __name__ == "__main__":
         log.write(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " Step 6: convert fragment to ChIA-PET ...\n")
         be = time.time()
 
-        infile = os.path.join(args.output,args.prefix+".all.frag.bed")
-        allfile = os.path.join(args.output,args.prefix+".total.all.bedpe")
-        PLECfile = os.path.join(args.output,args.prefix+".total.PLEC.bedpe")
-        PLISRSfile = os.path.join(args.output,args.prefix+".total.PLISRS.bedpe")
-        infl = open(infile,'r')
-        allout = open(allfile,'w')
-        PLECout = open(PLECfile,'w')
-        PLISRSout = open(PLISRSfile,'w')
-        function.convert(infl,allout,PLECout,PLISRSout,args.fragment)
-        infl.close()
-        allout.close()
-        PLECout.close()
-        PLISRSout.close()
-        if args.juicer == None or args.genome == None:
-            log.write("don't give juicer path and the genome size file,can't convert to hic file\n")
+        if args.anchor == None:
+            log.write("there no anchor file,so we will use the singleton data to generate the high coverage region instead anchor\n")
+            '''
+            we will do the work in next version
+            '''
         else:
-            returncode,returnresult = subprocess.getstatusoutput("java -jar {0} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {1} {2} {3} && java -jar {4} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {5} {6} {7} && java -jar {8} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {9} {10} {11}".format(args.juicer,allfile,allfile+".hic",args.genome,args.juicer,PLECfile,PLECfile+".hic",args.genome,args.juicer,PLISRSfile,PLISRSfile+".hic",args.genome))
-            if returncode != 0:
-                print ("[ERROR]: failed to generate HiC file : {0}\n".format(returnresult))
-                exit()
+            log.write("we will build a region tree")
+            anchorlist = []
+            with open(args.anchor,'r') as fin:
+                for line in fin:
+                    tmp = line.strip().split()
+                    anchorlist.append(tmp)
+            resFrag = function.list2tree(anchorlist)
             
-        infile = os.path.join(args.output,args.prefix+".samechrom.frag.bed")
-        allfile = os.path.join(args.output,args.prefix+".intra.all.bedpe")
-        PLECfile = os.path.join(args.output,args.prefix+".intra.PLEC.bedpe")
-        PLISRSfile = os.path.join(args.output,args.prefix+".intra.PLISRS.bedpe")
-        infl = open(infile,'r')
-        allout = open(allfile,'w')
-        PLECout = open(PLECfile,'w')
-        PLISRSout = open(PLISRSfile,'w')
-        function.convert(infl,allout,PLECout,PLISRSout,args.fragment)
-        infl.close()
-        allout.close()
-        PLECout.close()
-        PLISRSout.close()
+            infile = os.path.join(args.output,args.prefix+".all.frag.bed")
+            N = 0
+            countregion = {}
+            outregion = []
+            with open(infile,'r') as fin:
+                for line in fin:
+                    region_set = set()
+                    tmp = line.strip().split("\t",2)
+                    N += 1
+                    region = tmp[2].split(";")
+                    for i in region:
+                        region_set = region_set.union(function.overlap(resFrag,i))
+                    for i in region_set:
+                        region = i[0]+"\t"+str(i[1])+"\t"+str(i[2])
+                        if region not in countregion:
+                            countregion[region] = 0
+                        countregion[region] += 1
+                    if len(region_set) < 2: continue
+                    aa = list(region_set)
+                    for i in range(len(aa)-1):
+                        for j in range(i+1,len(aa)):
+                            # print(aa[i][0]+"\t"+str(aa[i][1])+"\t"+str(aa[i][2])+"\t"+aa[j][0]+"\t"+str(aa[j][1])+"\t"+str(aa[j][2]))
+                            outregion.append([aa[i][0]+"\t"+str(aa[i][1])+"\t"+str(aa[i][2]),aa[j][0]+"\t"+str(aa[j][1])+"\t"+str(aa[j][2])])
+            chiafile = os.path.join(args.output,args.prefix+".chiapet.cluster")
+            chiaout = open(chiafile,'w')
+            for i,j in outregion:
+                
+            chiaout.close()
         if args.juicer == None or args.genome == None:
             log.write("don't give juicer path and the genome size file,can't convert to hic file\n")
         else:
@@ -270,4 +278,38 @@ future work
 3:call cluster(use anchor)
 
 plot work
+'''
+'''
+from bx.intervals.intersection import Intersecter, Interval
+
+resFrag={}
+with open("/public/home/xyhuang/xiaoqing/ChRDSeq/MH63_H3K4me3.anchor",'r') as fin:
+    for line in fin:
+        tmp = line.strip().split("\t")
+        if tmp[0] in resFrag:
+            tree = resFrag[tmp[0]]
+            tree.add_interval(Interval(int(tmp[1]),int(tmp[2]), value={'name':tmp[3],'chr':tmp[0]}))
+        else:
+            tree = Intersecter()
+            tree.add_interval(Interval(int(tmp[1]),int(tmp[2]), value={'name':tmp[3],'chr':tmp[0]}))
+            resFrag[tmp[0]] = tree
+
+def overlap(resFrag,bed):
+    myset = set()
+    tmp = bed.split("\t")
+    if tmp[0] in resFrag:
+        result = resFrag[tmp[0]].find(int(tmp[1]),int(tmp[2]))
+        for i in result:
+            myset.add((i.value['chr'],i.start,i.end))
+    return myset
+
+with open("/public/home/xyhuang/multi-ChIA/MH63multi/RMCD001/RMCD001/outs/output/out.all.frag.bed",'r') as fin:
+    for line in fin:
+        region_set = set()
+        tmp = line.strip().split("\t",2)
+#        print(tmp[2])
+        region = tmp[2].split(";")
+        for i in region:
+            region_set = region_set.union(overlap(resFrag,i))
+        print(region_set)
 '''
