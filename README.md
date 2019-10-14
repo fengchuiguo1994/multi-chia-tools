@@ -30,7 +30,10 @@ the result
 - $prefix.total.*.bedpe.hic 4DN格式转成.hic格式
 - $prefix.intra.*.bedpe.hic 4DN格式转成.hic格式
 
-
+the distance.r result
+![](img/distance.png)
+the plot_multi_chia.py result
+![](img/plot_multi_chia.png)
 Release Notes
 ============
 
