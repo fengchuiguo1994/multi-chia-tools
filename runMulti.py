@@ -8,6 +8,9 @@ import os
 import pybedtools
 import random
 import function
+from scipy.stats import hypergeom
+import pandas as pd
+from numpy import log10
 
 '''
 function : deal with multi-chia data
@@ -60,7 +63,7 @@ if __name__ == "__main__":
         val = fin[1].split(",")
         for i,j in zip(flag,val):
             infodict[i] = j
-        log.write("gems_detected : {0}\nmean_dna_per_gem : {1}\nmolecule_length_mean : {2}\nmolecule_length_stddev : {3}\ntotal_reads : {4}\nmedian_insert_size : {5}\nmean_depth : {6}\nzero_coverage : {7}\npcr_duplication : {8}\n".format(infodict['gems_detected'],int(infodict['mean_dna_per_gem']),infodict['molecule_length_mean'],infodict['molecule_length_stddev'],infodict['number_reads'],infodict['median_insert_size'],infodict['mean_depth'],infodict['zero_coverage'],infodict['pcr_duplication']))
+        log.write("gems_detected : {0}\nmean_dna_per_gem : {1}\nmolecule_length_mean : {2}\nmolecule_length_stddev : {3}\ntotal_reads : {4}\nmedian_insert_size : {5}\nmean_depth : {6}\nzero_coverage : {7}\npcr_duplication : {8}\n".format(infodict['gems_detected'],infodict['mean_dna_per_gem'],infodict['molecule_length_mean'],infodict['molecule_length_stddev'],infodict['number_reads'],infodict['median_insert_size'],infodict['mean_depth'],infodict['zero_coverage'],infodict['pcr_duplication']))
 
         log.write("Step 1 use time : {0:.5f} s\n\n\n".format(time.time()-be))
 
@@ -148,9 +151,9 @@ if __name__ == "__main__":
                     for i in tmp[-1].split(","):
                         if i != "0" and i != "":
                             fout.write("{0}\t{1}\n".format(i,tmp[9]))
-        log.write("Rscript {0}/plot.r {1} {2}".format(os.path.split(os.path.realpath(__file__))[0],args.output+"/"+args.prefix+".distance.txt",args.output+"/"+args.prefix+".distance.pdf"))
-        print("Rscript {0}/plot.r {1} {2}\n".format(os.path.split(os.path.realpath(__file__))[0],args.output+"/"+args.prefix+".distance.txt",args.output+"/"+args.prefix+".distance.pdf"))
-        returncode,returnresult = subprocess.getstatusoutput("Rscript {0}/plot.r {1} {2}".format(os.path.split(os.path.realpath(__file__))[0],args.output+"/"+args.prefix+".distance.txt",args.output+"/"+args.prefix+".distance.pdf"))
+        log.write("Rscript {0}/R/distance.r {1} {2}\n".format(os.path.split(os.path.realpath(__file__))[0],args.output+"/"+args.prefix+".distance.txt",args.output+"/"+args.prefix+".distance.pdf"))
+        print("Rscript {0}/R/distance.r {1} {2}\n".format(os.path.split(os.path.realpath(__file__))[0],args.output+"/"+args.prefix+".distance.txt",args.output+"/"+args.prefix+".distance.pdf"))
+        returncode,returnresult = subprocess.getstatusoutput("Rscript {0}/R/distance.r {1} {2}".format(os.path.split(os.path.realpath(__file__))[0],args.output+"/"+args.prefix+".distance.txt",args.output+"/"+args.prefix+".distance.pdf"))
         if returncode != 0:
             print ("[ERROR]: failed to plot : {0}\n".format(returnresult))
             exit()
@@ -223,26 +226,34 @@ if __name__ == "__main__":
             we will do the work in next version
             '''
         else:
-            log.write("we will build a region tree")
+            N = 0 # fragment anchor count
+            Ntmp = 0 # fragment count
+            log.write("we will build a anchor region tree\n")
             anchorlist = []
             with open(args.anchor,'r') as fin:
                 for line in fin:
                     tmp = line.strip().split()
                     anchorlist.append(tmp)
             resFrag = function.list2tree(anchorlist)
+            # for i in resFrag.keys():
+                # print(i)
             
             infile = os.path.join(args.output,args.prefix+".all.frag.bed")
-            N = 0
             countregion = {}
-            outregion = []
+            # outregion = []
+            outregion = {}
             with open(infile,'r') as fin:
                 for line in fin:
                     region_set = set()
                     tmp = line.strip().split("\t",2)
-                    N += 1
                     region = tmp[2].split(";")
                     for i in region:
-                        region_set = region_set.union(function.overlap(resFrag,i))
+                        N += 1
+                        Ntmp += 1
+                        tmpset = function.overlap(resFrag,i)
+                        if len(tmpset) > 1:
+                            N += len(tmpset)-1
+                        region_set = region_set.union(tmpset)
                     for i in region_set:
                         region = i[0]+"\t"+str(i[1])+"\t"+str(i[2])
                         if region not in countregion:
@@ -253,21 +264,68 @@ if __name__ == "__main__":
                     for i in range(len(aa)-1):
                         for j in range(i+1,len(aa)):
                             # print(aa[i][0]+"\t"+str(aa[i][1])+"\t"+str(aa[i][2])+"\t"+aa[j][0]+"\t"+str(aa[j][1])+"\t"+str(aa[j][2]))
-                            outregion.append([aa[i][0]+"\t"+str(aa[i][1])+"\t"+str(aa[i][2]),aa[j][0]+"\t"+str(aa[j][1])+"\t"+str(aa[j][2])])
+                            # outregion.append([aa[i][0]+"\t"+str(aa[i][1])+"\t"+str(aa[i][2]),aa[j][0]+"\t"+str(aa[j][1])+"\t"+str(aa[j][2])])
+                            tmpregion = (aa[i][0]+"\t"+str(aa[i][1])+"\t"+str(aa[i][2]),aa[j][0]+"\t"+str(aa[j][1])+"\t"+str(aa[j][2]))
+                            if tmpregion not in outregion:
+                                outregion[tmpregion] = 0
+                            outregion[tmpregion] += 1
             chiafile = os.path.join(args.output,args.prefix+".chiapet.cluster")
             chiaout = open(chiafile,'w')
-            for i,j in outregion:
-                
+            for i,j in outregion.keys():
+                chiaout.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n".format(i,j,outregion[(i,j)],countregion[i],countregion[j],N))
             chiaout.close()
-        if args.juicer == None or args.genome == None:
-            log.write("don't give juicer path and the genome size file,can't convert to hic file\n")
-        else:
-            returncode,returnresult = subprocess.getstatusoutput("java -jar {0} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {1} {2} {3} && java -jar {4} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {5} {6} {7} && java -jar {8} pre -r 2500000,1000000,500000,250000,100000,50000,25000,10000,5000,1000 {9} {10} {11}".format(args.juicer,allfile,allfile+".hic",args.genome,args.juicer,PLECfile,PLECfile+".hic",args.genome,args.juicer,PLISRSfile,PLISRSfile+".hic",args.genome))
-            if returncode != 0:
-                print ("[ERROR]: failed to generate HiC file : {0}\n".format(returnresult))
-                exit()
+        log.write("fragment count:{0}\nfragment anchor count:{1}\n".format(Ntmp,N))
 
-        log.write("Step 5 use time : {0:.5f} s\n\n\n".format(time.time()-be))
+        # use hypergeom to calculator Significant cluster
+        chiapvalue = os.path.join(args.output,args.prefix+".chiapet.cluster.withpvalue")
+        chiaFDR = os.path.join(args.output,args.prefix+".chiapet.cluster.withpvalue.FDR.txt")
+        chialist = []
+        chiapd = pd.read_table(chiafile,header=None)
+        chiapd.columns=["chr1",'start1','end1',"chr2",'start2','end2','petcount','coverage1','coverage2','totalaln']
+        chiapd['pvalue'] = hypergeom.sf(chiapd['petcount'],chiapd['totalaln'],chiapd['coverage1'],chiapd['coverage2'])
+
+        # calculator FDR
+        from rpy2.robjects.packages import importr
+        from rpy2.robjects.vectors import FloatVector
+        from rpy2.robjects import pandas2ri
+        stats = importr('stats')
+        
+        pVal = chiapd['pvalue']
+        fdr = stats.p_adjust(FloatVector(pVal),method='BH')
+        fdrPD = pandas2ri.ri2py_vector(fdr)
+        # chiapd.insert(10,'FDR',fdrPD)
+        chiapd['FDR'] = fdrPD
+
+        # pv = chiapd['pvalue']
+        # pvlist = [i for i in pv]
+        # lengthpv = len(pvlist)
+        # pvsort = [i for i in pvlist]
+        # pvsort.sort()
+        # pvFDR = []
+        # for i in pvlist:
+        #     qv = i*lengthpv/(pvsort.index(i)+1)
+        # pvFDR.append(qv)
+        # chiapd['FDR']= pvFDR
+
+        chiapd['-log10pvalue'] = -log10(chiapd['pvalue'])
+        chiapd['-log10qvalue'] = -log10(chiapd['FDR'])
+
+        chiapd['-log10pvalue'] = chiapd['-log10pvalue'].map('{:.4f}'.format)
+        chiapd['-log10qvalue'] = chiapd['-log10qvalue'].map('{:.4f}'.format)
+        chiapd['pvalue'] = chiapd['pvalue'].map('{:.4e}'.format)
+        chiapd['FDR'] = chiapd['FDR'].map('{:.4e}'.format)
+        chiapd.to_csv(chiapvalue,sep="\t",index=False)
+
+        with open(chiapvalue,'r') as fin,open(chiaFDR,'w') as fout:
+            for line in fin:
+                if line.strip().endswith("qvalue"):
+                    fout.write(line)
+                else:
+                    tmp = line.strip().split()
+                    if int(tmp[6]) > 1 and float(tmp[11]) < 0.01:
+                        fout.write(line)
+
+        log.write("Step 6 use time : {0:.5f} s\n\n\n".format(time.time()-be))
 
     log.close()
 
@@ -275,7 +333,7 @@ if __name__ == "__main__":
 future work
 ## 1:use black list(drop some chromosome)
 ## 2:drop inter-interaction,just use intra-interaction(split complex to single and intra)
-3:call cluster(use anchor)
+## 3:call cluster(use anchor)
 
 plot work
 '''

@@ -236,8 +236,7 @@ def convert(infile,allfile,PLECfile,PLISRSfile,fragment):
 
 def list2tree(mylist):
     resFrag={}
-    for line in mylist:
-        tmp = line.strip().split("\t")
+    for tmp in mylist:
         if tmp[0] in resFrag:
             tree = resFrag[tmp[0]]
             tree.add_interval(Interval(int(tmp[1]),int(tmp[2]), value={'name':tmp[3],'chr':tmp[0]}))
@@ -245,6 +244,7 @@ def list2tree(mylist):
             tree = Intersecter()
             tree.add_interval(Interval(int(tmp[1]),int(tmp[2]), value={'name':tmp[3],'chr':tmp[0]}))
             resFrag[tmp[0]] = tree
+    return resFrag
 
 def overlap(resFrag,bed):
     myset = set()
@@ -253,4 +253,5 @@ def overlap(resFrag,bed):
         result = resFrag[tmp[0]].find(int(tmp[1]),int(tmp[2]))
         for i in result:
             myset.add((i.value['chr'],i.start,i.end))
+    # print(myset)
     return myset

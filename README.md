@@ -7,6 +7,10 @@ REQUIREMENTS
 python3<br/>
     - pysam<br/>
     - pybedtools<br/>
+    - scipy<br/>
+    - pandas<br/>
+    - numpy<br/>
+    - rpy2<br/>
 R<br/>
 
 USAGE of multi-chia-tools
@@ -30,12 +34,18 @@ the result
 - $prefix.total.*.bedpe.hic 4DN格式转成.hic格式
 - $prefix.intra.*.bedpe.hic 4DN格式转成.hic格式
 
-the distance.r result
-![](img/distance.png)
-the plot_multi_chia.py result
-![](img/plot_multi_chia.png)
+the distance.r result<br/>
+![](img/distance.png)<br/>
+the plot_multi_chia.py result<br/>
+![](img/plot_multi_chia.png)<br/>
+
 Release Notes
 ============
+
+Version 2.0.0
+--------------------------
+1. add convert to chiapet 
+2. add hypergeom to detect Significant cluster(loop)
 
 Version 1.0.1
 --------------------------
