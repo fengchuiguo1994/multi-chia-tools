@@ -33,11 +33,14 @@ the result
 - $prefix.intra.*.bedpe     不同方法计算得到的不包含了染色体间交互的4DN格式的结果
 - $prefix.total.*.bedpe.hic 4DN格式转成.hic格式
 - $prefix.intra.*.bedpe.hic 4DN格式转成.hic格式
+- $prefix.chiapet.cluster   类似于chiapet的cluster文件
+- $prefix.chiapet.cluster.withpvalue  计算了cluster的显著度
+- $prefix.chiapet.cluster.withpvalue.FDR.txt   过滤筛选高可信的cluster
 
 the distance.r result<br/>
-![](img/distance.png)<br/>
+![](https://github.com/fengchuiguo1994/multi-chia-tools/blob/2.0.0/img/distance.png)<br/>
 the plot_multi_chia.py result<br/>
-![](img/plot_multi_chia.png)<br/>
+![](https://github.com/fengchuiguo1994/multi-chia-tools/blob/2.0.0/img/plot_multi_chia.png)<br/>
 
 Release Notes
 ============
