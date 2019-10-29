@@ -1,6 +1,7 @@
 longranger align --id=rep2 --fastqs=./ --reference=/public/home/xyhuang/Genome/10Xgenome/dm3/refdata-dm3 --localcores=36
 
 python runMulti.py -i possorted_bam.bam -f summary.csv -s 1 -j /public/home/xyhuang/Tools/littletools/juicer_tools.1.8.9_jcuda.0.8.jar -g ~/Genome/10Xgenome/dm3/dm3.chrom.sizes
+python multi-chia-tools/runMulti.py -i possorted_bam.bam -f summary.csv -j ~/Tools/littletools/juicer_tools.1.8.9_jcuda.0.8.jar -g dm3.size -b black.list -a dm3.anchor
 
 perl -lane '@tmp=split(/\t/,$_,3);@tmp2=split(/;/,$tmp[2]);print $_ foreach(@tmp2);' output/out.frag.bed | sort --parallel=4 -k1,1 -k2,2n -k3,3n |bedtools genomecov -bga -i - -g ~/Genome/10Xgenome/dm3/dm3.chrom.sizes > output/out.frag.bedgraph
 bedGraphToBigWig output/out.frag.bedgraph ~/Genome/10Xgenome/dm3/dm3.chrom.sizes output/out.frag.bw
@@ -34,3 +35,5 @@ plotHeatmap -m output/out.frag.profile.gz -out output/out.frag.profile.pdf --col
 ## tian：(将跨染色体的结果分成了自连接和染色体间链接) 我的是全部考虑 (STEP040503_CLASS_GEM2EAS.run.p/STEP040504_CLASS_E2AS.run.p/STEP040505_COMBINE_SA.run)
 
 ## 最终的日志文件中 Reads_q>=30_&_len>=50bp_&_3'ext500、Reads_q>=30_&_len>=50bp_&_3'ext500_&_MAJOR_CHROM 写反了。
+
+## 
