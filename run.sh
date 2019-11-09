@@ -1,4 +1,5 @@
 longranger align --id=rep2 --fastqs=./ --reference=/public/home/xyhuang/Genome/10Xgenome/dm3/refdata-dm3 --localcores=36
+longranger wgs --id=10X --fastqs=./ --reference=/public/home/xyhuang/Genome/10Xgenome/refdata-GRCh38-2.1.0 --library=10X --description=10X.txt --vcmode gatk:/public/home/xyhuang/Tools/GenomeAnalysisTK-3.8-0-ge9d806836/GenomeAnalysisTK.jar --localcores=36 --sex=male
 
 python runMulti.py -i possorted_bam.bam -f summary.csv -s 1 -j /public/home/xyhuang/Tools/littletools/juicer_tools.1.8.9_jcuda.0.8.jar -g ~/Genome/10Xgenome/dm3/dm3.chrom.sizes
 python multi-chia-tools/runMulti.py -i possorted_bam.bam -f summary.csv -j ~/Tools/littletools/juicer_tools.1.8.9_jcuda.0.8.jar -g dm3.size -b black.list -a dm3.anchor
