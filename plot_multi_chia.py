@@ -113,19 +113,19 @@ def plot_multi(df,axs,drop=True):
 
 if __name__ == '__main__':
     # get interaction file
-    infile = r"C:\Users\huang\Desktop\cluters.txt"
+    infile = r"/public/home/xyhuang/xiaoqing/chiapet/result/combine/given_anchor/MH63_H3K4me3.cluster.FDRfiltered.txt"
     bedpe = readfile(infile)
     bedpe_group = bedpe.groupby(0)
     # bedpe_group.get_group('chr1')
     # get multi-chia file
-    infile = r"C:\Users\huang\Desktop\out.samechrom.frag.bed"
+    infile = r"out.samechrom.frag.bed"
     multi = readmulti(infile)
     multi.columns = ["barcode","count","chrom","start","end"]
     multi_group = multi.groupby("chrom")
     # multi_group.get_group('chr1')
     
     # give a plot region and filter data
-    region = "chr1:1500000-1600000"
+    region = "chr1:0-50000"
     chrom,start,end = region_split(region)
     tmp = bedpe_group.get_group(chrom)
     flt_bedpe = tmp[(tmp['start'] > start) & (tmp['end'] < end)]
@@ -143,7 +143,7 @@ if __name__ == '__main__':
     axs.set_title('chia-pet cluster')
     # axs.set_xlabel(chrom)
     axs.set_ylabel('petcount')
-    axs.axis([start,end,2,8])
+    axs.axis([start,end,0,8])
     axs.set_xticklabels([])
     
     # axs1 = fig.add_subplot(212)
@@ -155,4 +155,13 @@ if __name__ == '__main__':
     axs1.axis([start,end,0,aa])
 
     # plt.show()
-    plt.savefig("D:/temp.pdf",dpi=300)
+    plt.savefig("temp.pdf",dpi=300)
+
+'''
+future work
+1 增加anchor的track,画成chiapet-chipseq-multi_chia的形式
+2 修改文件命令行模式,可以指定输入输出和文件格式
+3 修改chiapet的高度8为自定义高度根绝实际调整大小,增加返回值,高度为返回值+1
+4 增加绘图模式,  叠放和平铺
+5 
+'''
