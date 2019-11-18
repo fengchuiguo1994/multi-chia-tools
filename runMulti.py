@@ -260,7 +260,8 @@ if __name__ == "__main__":
                             countregion[region] = 0
                         countregion[region] += 1
                     if len(region_set) < 2: continue
-                    aa = list(region_set)
+                    # aa = list(region_set)
+                    aa = sorted(list(region_set),key=lambda x:(int(re.search("\d+",x[0])[0]),x[1]))
                     for i in range(len(aa)-1):
                         for j in range(i+1,len(aa)):
                             # print(aa[i][0]+"\t"+str(aa[i][1])+"\t"+str(aa[i][2])+"\t"+aa[j][0]+"\t"+str(aa[j][1])+"\t"+str(aa[j][2]))
